@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 
 glium = "*"
+glium_text = "0.14.0"

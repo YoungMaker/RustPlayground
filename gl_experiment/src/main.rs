@@ -1,6 +1,9 @@
 extern crate glium; 
+extern crate glium_text;
 
-use glium::{glutin, Surface};
+use glium::{glutin, Surface, uniform};
+use std::time::{Instant};
+//use glium_text::{FontTexture, TextSystem, TextDisplay};
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -9,6 +12,7 @@ struct Vertex {
 
 const WINDOW_X_SIZE: f64 = 1024.0;
 const WINDOW_Y_SIZE: f64 = 768.0;
+const NANOS_PER_SECOND: f64 = 1e9;
 
 // shader programs. Very simple
 const VERTEX_SHADER_SRC: &str = r#"
@@ -66,6 +70,13 @@ fn main() {
     .. Default::default()
   };
 
+  // The `TextSystem` contains the shaders and elements used for text display.
+  let system = glium_text::TextSystem::new(&display);
+
+  // Creating a `FontTexture`, which a regular `Texture` which contains the font.
+  // Note that loading the systems fonts is not covered by this library.
+  let font = glium_text::FontTexture::new(&display, std::fs::File::open(&std::path::Path::new("/home/aaron/Snippets/RustPlayground/gl_experiment/src/Arial.ttf")).unwrap(), 24).unwrap();
+
   //FIXME: Implement real error handling rather than .unwrap()
   let mut window_closed = false;
 
@@ -76,6 +87,7 @@ fn main() {
   let scale: f32 = 1.0;
 
   while !window_closed {
+    let start = Instant::now();
 
     let mut target = display.draw();
     target.clear_color(0.0, 0.0, 0.0, 1.0);
@@ -92,12 +104,26 @@ fn main() {
           [ -angle.sin(), angle.cos(), 0.0,     0.0],
           [ 0.0,          0.0,         1.0,     0.0],
           [ shift_x ,     shift_y,     0.0, scale],
-      ]
-  };
+      ],
+    };
 
-    // draw as lines
+    //draw as lines
     target.draw(&vertex_buffer, &indices, &program, &uniforms,
       &draw_params).unwrap();
+    
+    let nanos = start.elapsed().as_nanos();
+    let fps = NANOS_PER_SECOND / nanos  as f64;
+    // Creating a `TextDisplay` which contains the elements required to draw a specific sentence.
+    let text = glium_text::TextDisplay::new(&system, &font, &std::format!("{} fps", fps as u32));
+    
+    // Finally, drawing the text is done like this:
+    let text_matrix = 
+      [[1.0, 0.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0, 0.0],
+      [0.0, 0.0, 1.0, 0.0],
+      [0.0, 0.0, 0.0, 80.00]];
+    glium_text::draw(&text, &system, &mut target, text_matrix, (1.0, 1.0, 1.0, 1.0));
+
     target.finish().unwrap();
 
     events_loop.poll_events(|ev| {
