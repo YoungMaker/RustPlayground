@@ -38,7 +38,8 @@ fn main() {
     .with_title("Lines demo Rust")
     .with_dimensions(glutin::dpi::LogicalSize::new(WINDOW_X_SIZE, WINDOW_Y_SIZE))
     .with_resizable( false );
-  let cb = glutin::ContextBuilder::new();
+  let cb = glutin::ContextBuilder::new()
+    .with_vsync(true);
   let display = glium::Display::new(wb, cb, &events_loop).unwrap();
 
   // ad the Vertex trait impl to the Vertex struct
@@ -69,11 +70,20 @@ fn main() {
   let mut window_closed = false;
 
   // 45 degrees in rad
-  let mut angle: f32 = 360.00f32.to_radians();
+  let mut angle: f32 = 0.00;
+  let shift_x: f32 = 0.0;
+  let shift_y: f32 = 0.0;
+  let scale: f32 = 1.0;
+
   while !window_closed {
 
     let mut target = display.draw();
     target.clear_color(0.0, 0.0, 0.0, 1.0);
+
+    angle += 1.0f32.to_radians();
+    if angle >= 360.00f32.to_radians() {
+      angle = 0.0
+    }
 
     //transformation matrix
     let uniforms = glium::uniform! {
@@ -81,7 +91,7 @@ fn main() {
           [ angle.cos(),  angle.sin(), 0.0,     0.0],
           [ -angle.sin(), angle.cos(), 0.0,     0.0],
           [ 0.0,          0.0,         1.0,     0.0],
-          [ shift_x ,     shift_y,     shift_z, scale],
+          [ shift_x ,     shift_y,     0.0, scale],
       ]
   };
 
